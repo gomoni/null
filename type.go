@@ -8,6 +8,7 @@ package null
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 )
 
 // TODO: add a better type constaint
@@ -15,10 +16,13 @@ import (
 //		~primiteTypes | json.Unmarshaller
 //	}
 //
+//	add fmt.Printf support(?)
+//		equal method?
+//  how to marshal undefined value? - if err, then use better one than io.EOF
 
 type Type[T any] struct {
 	value   T
-	present bool
+	defined bool
 	isNull  bool
 }
 
@@ -26,8 +30,8 @@ func (t Type[T]) Value() T {
 	return t.value
 }
 
-func (t Type[T]) Present() bool {
-	return t.present
+func (t Type[T]) IsUndefined() bool {
+	return !t.defined
 }
 
 func (t Type[T]) IsNull() bool {
@@ -37,26 +41,26 @@ func (t Type[T]) IsNull() bool {
 func New[T any](x T) Type[T] {
 	return Type[T]{
 		value:   x,
-		present: true,
+		defined: true,
 		isNull:  false,
 	}
 }
 
-func NewNull[T any](x T) Type[T] {
+func NewNull[T any]() Type[T] {
 	return Type[T]{
-		present: true,
+		defined: true,
 		isNull:  true,
 	}
 }
 
-func NewMissing[T any](x T) Type[T] {
+func NewUndefined[T any]() Type[T] {
 	return Type[T]{
-		present: false,
+		defined: false,
 	}
 }
 
 func (t *Type[T]) UnmarshalJSON(data []byte) error {
-	t.present = true
+	t.defined = true
 	if bytes.Equal(data, null()) {
 		t.isNull = true
 		return nil
@@ -71,6 +75,11 @@ func (t *Type[T]) UnmarshalJSON(data []byte) error {
 }
 
 func (t Type[T]) MarshalJSON() ([]byte, error) {
+	// FIXME: marshalling for t.defined = false must err
+	// in theory it can make a sense with omitempty, but there's no way of knowing it
+	if t.IsUndefined() {
+		return nil, io.EOF		// FIXME: better error
+	}
 	if t.isNull {
 		return null(), nil
 	}

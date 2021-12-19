@@ -8,6 +8,7 @@ package null_test
 import (
 	"encoding/json"
 	"testing"
+	"reflect"
 
 	. "github.com/gomoni/null"
 )
@@ -17,14 +18,26 @@ func TestJSON(t *testing.T) {
 	var testCases = []struct {
 		name      string
 		inp       string
-		wantValue int
+		wantValue Type[int]
 		wantJSON  string
 	}{
 		{
-			name:      "string",
+			name:      "int value",
 			inp:       `{"key": 42}`,
-			wantValue: 42,
+			wantValue: New(42),
 			wantJSON:  `{"key":42}`,
+		},
+		{
+			name:      "null value",
+			inp:       `{"key": null}`,
+			wantValue: NewNull[int](),
+			wantJSON:  `{"key":null}`,
+		},
+		{
+			name:      "undefined value",
+			inp:       `{}`,
+			wantValue: NewUndefined[int](),
+			wantJSON:  `{}`,
 		},
 	}
 
@@ -39,9 +52,8 @@ func TestJSON(t *testing.T) {
 				t.Fatalf("unexpected err when unmarshaling: %s", err)
 			}
 
-			got := s.Key.Value()
-			if got != tt.wantValue {
-				t.Fatalf("unexpected value: got %d, want: %d", got, tt.wantValue)
+			if !reflect.DeepEqual(s.Key, tt.wantValue) {
+				t.Fatalf("unexpected value: got %+v, want: %+v", s.Key, tt.wantValue)
 			}
 
 			out, err := json.Marshal(s)
