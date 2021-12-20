@@ -5,9 +5,14 @@ for parsing json when needed.
 # Usage
 
 ```go
+// define struct with a wrapper type
 var s struct {
     Key Type[int] `json:"key"`
 }
+// unmarshal as usual
+err := json.Unmarshal(data, &s)
+// access value via Value() method, which returns error for null and undefined cases
+value, err := s.Key.Value()
 ```
 
 | JSON           | Value  | Error        |

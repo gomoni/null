@@ -25,11 +25,14 @@ var (
 	null         = []byte(`null`)
 )
 
+// Type is null and undefined aware type wrapper for parsing JSON. Unlike Go
+// types it can distinguish cases "key": null and key is not present in JSON.
 type Type[T any] struct {
 	value T
 	state state
 }
 
+// Value returns value from JSON, or ErrUndefined or ErrNull
 func (t Type[T]) Value() (T, error) {
 	switch t.state {
 	case isUndefined:
@@ -43,6 +46,7 @@ func (t Type[T]) Value() (T, error) {
 	}
 }
 
+// New creates new wrapped value
 func New[T any](x T) Type[T] {
 	return Type[T]{
 		value: x,
@@ -50,18 +54,21 @@ func New[T any](x T) Type[T] {
 	}
 }
 
+// NewNull creates new null value.
 func NewNull[T any]() Type[T] {
 	return Type[T]{
 		state: isNull,
 	}
 }
 
+// NewNull creates new undefined value.
 func NewUndefined[T any]() Type[T] {
 	return Type[T]{
 		state: isUndefined,
 	}
 }
 
+// UnmarshalJSON implements json.Unmarshaler
 func (t *Type[T]) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, null) {
 		t.state = isNull
@@ -76,6 +83,7 @@ func (t *Type[T]) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements json.Marshaler. Marshaling undefined values results in error.
 func (t Type[T]) MarshalJSON() ([]byte, error) {
 	switch t.state {
 	case isUndefined:
