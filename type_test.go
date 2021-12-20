@@ -7,8 +7,9 @@ package null_test
 
 import (
 	"encoding/json"
-	"testing"
+	"errors"
 	"reflect"
+	"testing"
 
 	. "github.com/gomoni/null"
 )
@@ -56,13 +57,20 @@ func TestJSON(t *testing.T) {
 				t.Fatalf("unexpected value: got %+v, want: %+v", s.Key, tt.wantValue)
 			}
 
-			out, err := json.Marshal(s)
-			if err != nil {
-				t.Fatalf("unexpected err when marshaling: %s", err)
-			}
+			if _, err := s.Key.Value(); errors.Is(err, ErrUndefined) {
+				_, err = json.Marshal(s)
+				if !errors.Is(err, ErrUndefined) {
+					t.Fatalf("expected err when marshaling undefined: got %+v, want ErrUndefined", err)
+				}
+			} else {
+				out, err := json.Marshal(s)
+				if err != nil {
+					t.Fatalf("unexpected err when marshaling: %s", err)
+				}
 
-			if string(out) != tt.wantJSON {
-				t.Fatalf("unexpected json: got %s, want: %s", string(out), tt.wantJSON)
+				if string(out) != tt.wantJSON {
+					t.Fatalf("unexpected json: got %s, want: %s", string(out), tt.wantJSON)
+				}
 			}
 
 		})

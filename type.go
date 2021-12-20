@@ -8,65 +8,78 @@ package null
 import (
 	"bytes"
 	"encoding/json"
-	"io"
+	"errors"
 )
 
 // TODO: add a better type constaint
-//	type marsheable interface {
-//		~primiteTypes | json.Unmarshaller
-//	}
 //
 //	add fmt.Printf support(?)
 //		equal method?
-//  how to marshal undefined value? - if err, then use better one than io.EOF
+
+type state uint8
+
+const (
+	isUndefined state = 0
+	isNull      state = 1
+	isDefined   state = 2
+)
+
+var (
+	ErrUndefined = errors.New("undefined")
+	ErrNull      = errors.New("null")
+	null         = []byte(`null`)
+)
+
+//	type anyjson interface {
+//		~primiteTypes
+//		json.Unmarshaler
+//		json.Marshaler
+//	}
 
 type Type[T any] struct {
-	value   T
-	defined bool
-	isNull  bool
+	value T
+	state state
 }
 
-func (t Type[T]) Value() T {
-	return t.value
-}
-
-func (t Type[T]) IsUndefined() bool {
-	return !t.defined
-}
-
-func (t Type[T]) IsNull() bool {
-	return t.isNull
+func (t Type[T]) Value() (T, error) {
+	switch t.state {
+	case isUndefined:
+		var zero T
+		return zero, ErrUndefined
+	case isNull:
+		var zero T
+		return zero, ErrNull
+	default:
+		return t.value, nil
+	}
 }
 
 func New[T any](x T) Type[T] {
 	return Type[T]{
-		value:   x,
-		defined: true,
-		isNull:  false,
+		value: x,
+		state: isDefined,
 	}
 }
 
 func NewNull[T any]() Type[T] {
 	return Type[T]{
-		defined: true,
-		isNull:  true,
+		state: isNull,
 	}
 }
 
 func NewUndefined[T any]() Type[T] {
 	return Type[T]{
-		defined: false,
+		state: isUndefined,
 	}
 }
 
 func (t *Type[T]) UnmarshalJSON(data []byte) error {
-	t.defined = true
-	if bytes.Equal(data, null()) {
-		t.isNull = true
+	if bytes.Equal(data, null) {
+		t.state = isNull
 		return nil
 	}
-	t.isNull = false
 
+	t.state = isDefined
 	if err := json.Unmarshal(data, &t.value); err != nil {
 		return err
 	}
@@ -75,17 +88,12 @@ func (t *Type[T]) UnmarshalJSON(data []byte) error {
 }
 
 func (t Type[T]) MarshalJSON() ([]byte, error) {
-	// FIXME: marshalling for t.defined = false must err
-	// in theory it can make a sense with omitempty, but there's no way of knowing it
-	if t.IsUndefined() {
-		return nil, io.EOF		// FIXME: better error
+	switch t.state {
+	case isUndefined:
+		return nil, ErrUndefined
+	case isNull:
+		return null, nil
+	default:
+		return json.Marshal(t.value)
 	}
-	if t.isNull {
-		return null(), nil
-	}
-	return json.Marshal(t.value)
-}
-
-func null() []byte {
-	return []byte(`null`)
 }
