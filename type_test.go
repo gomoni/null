@@ -16,6 +16,7 @@ import (
 
 func TestJSON(t *testing.T) {
 	t.Parallel()
+
 	var testCases = []struct {
 		name      string
 		inp       string

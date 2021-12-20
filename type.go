@@ -11,11 +11,6 @@ import (
 	"errors"
 )
 
-// TODO: add a better type constaint
-//
-//	add fmt.Printf support(?)
-//		equal method?
-
 type state uint8
 
 const (
@@ -29,12 +24,6 @@ var (
 	ErrNull      = errors.New("null")
 	null         = []byte(`null`)
 )
-
-//	type anyjson interface {
-//		~primiteTypes
-//		json.Unmarshaler
-//		json.Marshaler
-//	}
 
 type Type[T any] struct {
 	value T
@@ -97,3 +86,7 @@ func (t Type[T]) MarshalJSON() ([]byte, error) {
 		return json.Marshal(t.value)
 	}
 }
+
+// TODO
+//	add fmt.Printf support(?)
+//		equal method?
