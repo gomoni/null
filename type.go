@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 type state uint8
@@ -92,6 +93,48 @@ func (t Type[T]) MarshalJSON() ([]byte, error) {
 		return null, nil
 	default:
 		return json.Marshal(t.value)
+	}
+}
+
+//						fmt interfaces
+
+// String implements fmt.GoStringer for %#v format string
+func (t Type[T]) GoString() string {
+	typ := fmt.Sprintf("%T", t.value)
+	switch t.state {
+	case isUndefined:
+		return fmt.Sprintf("NewUndefined[%s]()", typ)
+	case isNull:
+		return fmt.Sprintf("NewNull[%s]()", typ)
+	default:
+		return fmt.Sprintf("New[%s](%#v)", typ, t.value)
+	}
+}
+
+func (t Type[T]) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('#') {
+			fmt.Fprintf(s, t.GoString())
+			return
+		}
+		// ignoring s.Flag('+') as we don't want to expose internals
+		fallthrough
+	case 's':
+		fallthrough
+	case 'q':
+		switch t.state {
+		case isUndefined:
+			fmt.Fprintf(s, "%s", `undefined`)
+		case isNull:
+			fmt.Fprintf(s, "%s", `null`)
+		default:
+			format := "%v"
+			if verb == 'q' {
+				format = "%q"
+			}
+			fmt.Fprintf(s, format, t.value)
+		}
 	}
 }
 

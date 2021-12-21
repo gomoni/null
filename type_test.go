@@ -8,6 +8,7 @@ package null_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -76,5 +77,50 @@ func TestJSON(t *testing.T) {
 
 		})
 	}
+}
 
+func TestSprintf(t *testing.T) {
+	type v struct {
+		Int int
+		Str string
+	}
+	type s struct {
+		Key   Type[string]
+		Value Type[v]
+	}
+
+	var testCases = []struct {
+		name string
+		inp  s
+		want map[string]string
+	}{
+		{
+			name: "undefined",
+			inp:  s{Key: NewUndefined[string](), Value: NewUndefined[v]()},
+			want: map[string]string{
+				"%s":  "{undefined undefined}",
+				"%q":  "{undefined undefined}",
+				"%v":  "{undefined undefined}",
+				"%+v": "{Key:undefined Value:undefined}",
+				"%#v": "null_test.s{Key:NewUndefined[string](), Value:NewUndefined[null_test.v]()}",
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			for format, want := range tt.want {
+				t.Run(format, func(t *testing.T) {
+					got := fmt.Sprintf(format, tt.inp)
+					if got != want {
+						t.Errorf("format failed %q: got %q, want %q", format, got, want)
+					}
+				})
+			}
+		})
+	}
+
+	for _, format := range []string{"%s", "%q", "%v", "%+v", "%#v"} {
+		t.Logf("`%s`: %s", format, fmt.Sprintf(format))
+	}
 }
