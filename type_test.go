@@ -80,6 +80,7 @@ func TestJSON(t *testing.T) {
 }
 
 func TestSprintf(t *testing.T) {
+	t.Parallel()
 	type v struct {
 		Int int
 		Str string
@@ -105,10 +106,34 @@ func TestSprintf(t *testing.T) {
 				"%#v": "null_test.s{Key:NewUndefined[string](), Value:NewUndefined[null_test.v]()}",
 			},
 		},
+		{
+			name: "null",
+			inp:  s{Key: NewNull[string](), Value: NewNull[v]()},
+			want: map[string]string{
+				"%s":  "{null null}",
+				"%q":  "{null null}",
+				"%v":  "{null null}",
+				"%+v": "{Key:null Value:null}",
+				"%#v": "null_test.s{Key:NewNull[string](), Value:NewNull[null_test.v]()}",
+			},
+		},
+		{
+			name: "some",
+			inp:  s{Key: New("some"), Value: New(v{42, "string"})},
+			want: map[string]string{
+				"%s":  "{some {42 string}}",
+				"%q":  `{"some" {'*' "string"}}`,
+				"%v":  "{some {42 string}}",
+				"%+v": "{Key:some Value:{42 string}}",
+				"%#v": `null_test.s{Key:New[string]("some"), Value:New[null_test.v](null_test.v{Int:42, Str:"string"})}`,
+			},
+		},
 	}
 
 	for _, tt := range testCases {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			for format, want := range tt.want {
 				t.Run(format, func(t *testing.T) {
 					got := fmt.Sprintf(format, tt.inp)
@@ -118,9 +143,5 @@ func TestSprintf(t *testing.T) {
 				})
 			}
 		})
-	}
-
-	for _, format := range []string{"%s", "%q", "%v", "%+v", "%#v"} {
-		t.Logf("`%s`: %s", format, fmt.Sprintf(format))
 	}
 }
