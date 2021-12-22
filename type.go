@@ -137,7 +137,3 @@ func (t Type[T]) Format(s fmt.State, verb rune) {
 		}
 	}
 }
-
-// TODO
-//	add fmt.Printf support(?)
-//		equal method?
