@@ -1,6 +1,9 @@
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
 # null
-Null and undefined aware type wrapper for Go types. Provides richer semantics
-for parsing json when needed.
+null is a Go library providing an easy to use interface to handle `null` value or missing key. `Type[T any]` implements `json.Marshaler` and `json.Unmarshaler` . Because of generics it works for any type which can be unmarshalled from/marshalled into JSON.
+
+Marshalling of undefined is an error though.
 
 # Usage
 
