@@ -71,15 +71,16 @@ func NewUndefined[T any]() Type[T] {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (t *Type[T]) UnmarshalJSON(data []byte) error {
+	t.state = isUndefined
 	if bytes.Equal(data, null) {
 		t.state = isNull
 		return nil
 	}
 
-	t.state = isDefined
 	if err := json.Unmarshal(data, &t.value); err != nil {
 		return err
 	}
+	t.state = isDefined
 
 	return nil
 }
