@@ -33,7 +33,7 @@ func TestJSON(t *testing.T) {
 		{
 			name:      "null value",
 			inp:       `{"key": null}`,
-			wantValue: NewNull[int](),
+			wantValue: NewNullType[int](),
 			wantJSON:  `{"key":null}`,
 		},
 		{
@@ -108,7 +108,7 @@ func TestSprintf(t *testing.T) {
 		},
 		{
 			name: "null",
-			inp:  s{Key: NewNull[string](), Value: NewNull[v]()},
+			inp:  s{Key: NewNullType[string](), Value: NewNullType[v]()},
 			want: map[string]string{
 				"%s":  "{null null}",
 				"%q":  "{null null}",

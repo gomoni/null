@@ -33,7 +33,7 @@ type Type[T any] struct {
 	state state
 }
 
-// Value returns value from JSON, or ErrUndefined or ErrNull
+// Value returns value, ErrUndefined or ErrNull
 func (t Type[T]) Value() (T, error) {
 	switch t.state {
 	case isUndefined:
@@ -56,7 +56,7 @@ func New[T any](x T) Type[T] {
 }
 
 // NewNull creates new null value.
-func NewNull[T any]() Type[T] {
+func NewNullType[T any]() Type[T] {
 	return Type[T]{
 		state: isNull,
 	}
@@ -73,7 +73,6 @@ func NewUndefined[T any]() Type[T] {
 func (t *Type[T]) UnmarshalJSON(data []byte) error {
 	var zero T
 	t.value = zero
-	t.state = isUndefined
 	if bytes.Equal(data, null) {
 		t.state = isNull
 		return nil
